@@ -29,6 +29,14 @@ word_window_width = 5
 selected_terms_file = "selected_terms.txt"
 embedding_model_file = "clinical_notes_embedding_model"
 
+# # Define a custom tokenizer function with stop word removal, lowercase, and punctuation removal
+# def custom_tokenizer(text):
+#     # Use spaCy to tokenize the text
+#     doc = nlp(text)
+#     tokens = [token.text.lower() for token in doc if not token.is_stop and not token.is_punct]
+#     return tokens
+
+#Mana's custom tokenizer
 def custom_tokenizer(texts):
     tokenized_texts = []
     for text in texts:
@@ -37,6 +45,19 @@ def custom_tokenizer(texts):
         tokens = [token.text.lower() for token in doc if not token.is_stop and not token.is_punct]
         tokenized_texts.append(' '.join(tokens))  # Join tokens into a string
     return tokenized_texts
+
+# # Stage 1: Tokenize clinical notes from XML files
+# def tokenize_xml(xml_folder_path):
+#     tokenized_corpus = []
+#     for filename in os.listdir(xml_folder_path):
+#         if filename.endswith(".xml"):
+#             xml_path = os.path.join(xml_folder_path, filename)
+#             tree = ET.parse(xml_path)
+#             root = tree.getroot()
+#             clinical_notes = " ".join(element.text for element in root.iter() if element.text)
+#             tokens = custom_tokenizer(clinical_notes)
+#             tokenized_corpus.append(tokens)
+#     return tokenized_corpus
 
 # Stage 1: Tokenize clinical notes from XML files
 def tokenize_xml(xml_folder_path):
@@ -91,6 +112,17 @@ def explore_vocabulary(embedding_model, num_similar_terms, max_approvals):
 
     return selected_terms
 
+# # Stage 4: Assign labels and review (automated labeling)
+# def assign_labels_and_review(tokenized_corpus, selected_terms):
+#     labeled_data = []
+
+#     for note_tokens in tokenized_corpus:
+#         assigned_labels = [term for term in selected_terms if term in note_tokens]
+#         labeled_data.append(assigned_labels)
+
+#     return labeled_data
+
+#Stage 4, Mana
 def assign_labels_and_review(tokenized_corpus, selected_terms):
     labeled_data = []
 
@@ -170,9 +202,28 @@ print("X_test_counts shape:", X_test_counts.shape)
 
 count_vect.vocabulary_.get(u'palpable')
 
+# # Use TfidfVectorizer to transform the text data for all_data
+# from sklearn.feature_extraction.text import TfidfTransformer
+
+# tfidf_transformer = TfidfTransformer()
+# X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
+# X_train_tfidf.shape
+# tfidf_vectorizer = TfidfVectorizer()
+# tfidf_vectorizer.fit_transform([" ".join(tokens) for tokens in all_data])
+
+# # Transform X_train using the same vectorizer
+# X_train_tfidf = tfidf_vectorizer.transform([" ".join(tokens) for tokens in X_train])
+
+
+# ### skip for now
+# X_train_tfidf = tfidf_vectorizer.transform([" ".join(tokens) for tokens in X_train])
+# X_train_tfidf.shape
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
+
+# Assuming X_train_counts is the result of applying CountVectorizer
+# Make sure you have imported and initialized CountVectorizer before this step.
 
 # Initialize TfidfTransformer and fit to X_train_counts
 tfidf_transformer = TfidfTransformer()
@@ -185,6 +236,32 @@ tfidf_vectorizer.fit([" ".join([token.text for token in tokens]) for tokens in a
 # Transform X_train using the same vectorizer
 X_train_tfidf = tfidf_vectorizer.transform([" ".join([token.text for token in tokens]) for tokens in X_train])
 
+# skip for now
+
+# # Ensure X_train is not empty
+# if not X_train:
+#     print("Error: X_train is empty.")
+# else:
+#     # Check for empty token lists in X_train
+#     non_empty_X_train = [tokens for tokens in X_train if tokens]
+#     if len(non_empty_X_train) != len(X_train):
+#         print(f"Warning: {len(X_train) - len(non_empty_X_train)} empty token lists found in X_train.")
+#     X_train = non_empty_X_train  # Update X_train to exclude empty token lists
+
+#     # Print the shape of X_train after removing empty token lists
+#     print("Shape of X_train after cleaning:", X_train_tfidf.shape)
+
+# from sklearn.preprocessing import MultiLabelBinarizer
+
+# # Assuming X_train contains your data and selected_terms is defined properly
+# # Make sure you have imported and initialized MultiLabelBinarizer before this step.
+
+# mlb = MultiLabelBinarizer()
+
+# # Assuming assign_labels_and_review is a function that assigns labels based on some criteria
+# labels = assign_labels_and_review(X_train, selected_terms)
+
+# binary_labels = mlb.fit_transform(labels)
 
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.linear_model import LogisticRegression
@@ -219,6 +296,23 @@ predicted_multi_labels = classifier.predict(X_test_tfidf)
 # Print classification report
 print(classification_report(binary_labels, predicted_multi_labels))
 
+#X_train
+
+#binary_labels
+
+# # Fit the mlb object on the original labels
+# mlb.fit(binary_labels)
+
+# # Create and train the classifier (Logistic Regression)
+# classifier = LogisticRegression(solver='liblinear')
+
+# ### original
+# # classifier.fit(X_train_tfidf, binary_labels)  # Use binary_labels, not binary_labels_flattened
+
+
+# #### new
+# classifier.fit(X_train, binary_labels)  # Use binary_labels, not binary_labels_flattened
+
 # Transform test data using the same vectorizer
 X_test_tfidf = tfidf_vectorizer.transform([" ".join([token.text for token in tokens]) for tokens in X_test])
 
@@ -241,3 +335,6 @@ print("Shape of binary_labels_flattened:", binary_labels_flattened.shape)
 # Check the number of samples in both arrays
 print("Number of samples in X_train_tfidf:", X_train_tfidf.shape[0])
 print("Number of samples in binary_labels_flattened:", len(binary_labels_flattened))
+
+# # Print classification report for multi-label classification
+# print(classification_report(assign_labels_and_review(X_test, selected_terms), predicted_multi_labels))
