@@ -1,5 +1,6 @@
 # NotNimbleMiner
-NotNimbleMiner
+**NotNimbleMiner by Christy Mednick, Zachary Graeber, Malav Ramanan, Anirudh Venkatachalam and Manasvini Narayanan for ECS170: Artificial Intelligence with Gabriel Simmons.**
+
 NotNimbleMiner is a project aimed at extracting and classifying sensitive information from clinical notes using natural language processing techniques. This repository contains code for a comprehensive pipeline that tokenizes clinical notes from XML files, creates word embeddings, explores vocabulary, assigns labels, and trains a multi-label classification model.
 
 **Key Features:**
